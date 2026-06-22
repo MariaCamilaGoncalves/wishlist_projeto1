@@ -13,7 +13,6 @@ export const wishListView = {
     renderTitulo(lista, onEditar, onExcluir) {
         if (!lista) return
         document.getElementById('lista-titulo').textContent = lista.name
-        document.getElementById('lista-subtitulo').textContent = `Lista #${lista.id}`
         document.getElementById('btn-editar-lista').onclick = () => onEditar(lista)
         document.getElementById('btn-excluir-lista').onclick = () => onExcluir(lista.id)
     },

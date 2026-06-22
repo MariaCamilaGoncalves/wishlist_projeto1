@@ -23,7 +23,6 @@ let modalConfirmContaBS = null
 let modalListaBS = null
 let modalPerfilBS = null
 
-// ── TOAST ──
 function toast(msg, tipo = 'ok') {
     let container = document.getElementById('toast-container')
     if (!container) {
@@ -39,7 +38,6 @@ function toast(msg, tipo = 'ok') {
     setTimeout(() => el.remove(), 3000)
 }
 
-// ── LIMPAR MODAIS BOOTSTRAP ──
 function limparModais() {
     document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
     document.body.classList.remove('modal-open')
@@ -47,7 +45,6 @@ function limparModais() {
     document.body.style.removeProperty('padding-right')
 }
 
-// ── LOGIN ──
 async function iniciarLogin() {
     if (eventoController) eventoController.abort()
     limparModais()
@@ -120,7 +117,6 @@ function inicializarEventos() {
     }, { signal })
 }
 
-// ── CARREGAR ──
 async function carregarTudo() {
     try {
         categorias = await categoryService.listar()
@@ -131,7 +127,6 @@ async function carregarTudo() {
     }
 }
 
-// ── WISHLISTS ──
 async function carregarListas() {
     try {
         listas = await wishListService.listar(usuarioAtivo.id)
@@ -205,7 +200,6 @@ async function confirmarExclusaoLista() {
     } catch (err) { toast(err.message, 'erro') }
 }
 
-// ── ITEMS ──
 async function carregarItens() {
     if (!listaAtiva) return
     try {
@@ -327,7 +321,6 @@ async function confirmarExclusao() {
     } catch (err) { toast(err.message, 'erro') }
 }
 
-// ── HISTÓRICO ──
 async function abrirHistorico(id) {
     const item = itens.find(i => i.id === id)
     if (!item) return
@@ -337,7 +330,6 @@ async function abrirHistorico(id) {
     } catch (err) { toast(err.message, 'erro') }
 }
 
-// ── PERFIL ──
 async function salvarPerfil() {
     const name = document.getElementById('perfil-name').value.trim()
     const email = document.getElementById('perfil-email').value.trim()

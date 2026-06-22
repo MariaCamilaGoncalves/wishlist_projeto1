@@ -1,18 +1,58 @@
-import pg from 'pg'
-import 'dotenv/config'
+import { DatabaseSync } from 'node:sqlite'
 
-const { Pool } = pg
+export const db = new DatabaseSync('banco.db')
 
-const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-})
+db.exec('PRAGMA foreign_keys = ON;')
 
-pool.connect()
-    .then(() => console.log('PostgreSQL conectado!'))
-    .catch(err => console.error('Erro ao conectar no PostgreSQL:', err.message))
+db.exec(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL UNIQUE,
+    icon       TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
 
-export default pool
+  CREATE TABLE IF NOT EXISTS users (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    email      TEXT NOT NULL UNIQUE,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS wish_lists (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS items (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_id  INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    wish_list_id INTEGER REFERENCES wish_lists(id) ON DELETE CASCADE,
+    name         TEXT NOT NULL,
+    price        REAL NOT NULL DEFAULT 0,
+    priority     TEXT NOT NULL DEFAULT 'media' CHECK (priority IN ('alta', 'media', 'baixa')),
+    status       TEXT NOT NULL DEFAULT 'desejado' CHECK (status IN ('desejado', 'comprado')),
+    link         TEXT,
+    created_at   TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS price_history (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id     INTEGER REFERENCES items(id) ON DELETE CASCADE,
+    price       REAL NOT NULL,
+    recorded_at TEXT DEFAULT (datetime('now'))
+  );
+`)
+
+db.exec(`
+  INSERT OR IGNORE INTO categories (name, icon) VALUES
+    ('Eletrônicos', '💻'),
+    ('Roupas', '👕'),
+    ('Livros', '📚'),
+    ('Games', '🎮'),
+    ('Casa', '🏠'),
+    ('Outros', '📦');
+`)

@@ -22,7 +22,7 @@ export const itemController = {
         res.status(204).end()
     },
     async totalEstimado(req, res) {
-        const total = await itemService.totalEstimado()
+        const total = await itemService.totalEstimado(req.query.wish_list_id ? Number(req.query.wish_list_id) : null)
         res.json({ total })
     },
 }

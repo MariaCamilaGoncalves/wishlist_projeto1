@@ -1,45 +1,33 @@
-import pool from '../database/db.js'
+import { db } from '../database/db.js'
 
 export const userModel = {
-    async listarTodos() {
-        const { rows } = await pool.query('SELECT * FROM users ORDER BY created_at DESC')
-        return rows
+    listarTodos() {
+        return db.prepare('SELECT * FROM users ORDER BY created_at DESC').all()
     },
 
-    async buscarPorId(id) {
-        const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id])
-        return rows[0] || null
+    buscarPorId(id) {
+        return db.prepare('SELECT * FROM users WHERE id = ?').get(id) || null
     },
 
-    async existeEmail(email) {
-        const { rows } = await pool.query(
-            'SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [email]
-        )
-        return rows.length > 0
+    existeEmail(email) {
+        return db.prepare('SELECT 1 FROM users WHERE LOWER(email) = LOWER(?)').get(email) !== undefined
     },
 
-    async inserir({ name, email }) {
-        const { rows } = await pool.query(
-            'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
-            [name, email]
-        )
-        return rows[0]
+    inserir({ name, email }) {
+        const r = db.prepare('INSERT INTO users (name, email) VALUES (?, ?)').run(name, email)
+        return this.buscarPorId(r.lastInsertRowid)
     },
 
-    async atualizar(id, { name, email }) {
-        const { rows } = await pool.query(
-            `UPDATE users SET
-        name       = COALESCE($1, name),
-        email      = COALESCE($2, email),
-        updated_at = NOW()
-       WHERE id = $3 RETURNING *`,
-            [name, email, id]
-        )
-        return rows[0] || null
+    atualizar(id, { name, email }) {
+        const atual = this.buscarPorId(id)
+        if (!atual) return null
+        db.prepare(`
+      UPDATE users SET name = ?, email = ?, updated_at = datetime('now') WHERE id = ?
+    `).run(name ?? atual.name, email ?? atual.email, id)
+        return this.buscarPorId(id)
     },
 
-    async remover(id) {
-        const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [id])
-        return rowCount > 0
+    remover(id) {
+        return db.prepare('DELETE FROM users WHERE id = ?').run(id).changes > 0
     },
 }

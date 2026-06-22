@@ -1,44 +1,32 @@
-import pool from '../database/db.js'
+import { db } from '../database/db.js'
 
 export const categoryModel = {
-    async listarTodas() {
-        const { rows } = await pool.query('SELECT * FROM categories ORDER BY name')
-        return rows
+    listarTodas() {
+        return db.prepare('SELECT * FROM categories ORDER BY name').all()
     },
 
-    async buscarPorId(id) {
-        const { rows } = await pool.query('SELECT * FROM categories WHERE id = $1', [id])
-        return rows[0] || null
+    buscarPorId(id) {
+        return db.prepare('SELECT * FROM categories WHERE id = ?').get(id) || null
     },
 
-    async existeNome(name) {
-        const { rows } = await pool.query(
-            'SELECT id FROM categories WHERE LOWER(name) = LOWER($1)', [name]
-        )
-        return rows.length > 0
+    existeNome(name) {
+        return db.prepare('SELECT 1 FROM categories WHERE LOWER(name) = LOWER(?)').get(name) !== undefined
     },
 
-    async inserir({ name, icon }) {
-        const { rows } = await pool.query(
-            'INSERT INTO categories (name, icon) VALUES ($1, $2) RETURNING *',
-            [name, icon || null]
-        )
-        return rows[0]
+    inserir({ name, icon }) {
+        const r = db.prepare('INSERT INTO categories (name, icon) VALUES (?, ?)').run(name, icon ?? null)
+        return this.buscarPorId(r.lastInsertRowid)
     },
 
-    async atualizar(id, { name, icon }) {
-        const { rows } = await pool.query(
-            `UPDATE categories SET
-        name = COALESCE($1, name),
-        icon = COALESCE($2, icon)
-       WHERE id = $3 RETURNING *`,
-            [name, icon, id]
-        )
-        return rows[0] || null
+    atualizar(id, { name, icon }) {
+        const atual = this.buscarPorId(id)
+        if (!atual) return null
+        db.prepare('UPDATE categories SET name = ?, icon = ? WHERE id = ?')
+            .run(name ?? atual.name, icon ?? atual.icon, id)
+        return this.buscarPorId(id)
     },
 
-    async remover(id) {
-        const { rowCount } = await pool.query('DELETE FROM categories WHERE id = $1', [id])
-        return rowCount > 0
+    remover(id) {
+        return db.prepare('DELETE FROM categories WHERE id = ?').run(id).changes > 0
     },
 }

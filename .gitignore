@@ -1,5 +1,5 @@
 backend/node_modules/
-backend/.env
+banco.db
 .DS_Store
 Thumbs.db
 *.log
